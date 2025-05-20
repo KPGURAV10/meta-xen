@@ -1,0 +1,105 @@
+# Sample local.conf for Xen on Jetson Orin Nano NVME
+# Machine Selection
+MACHINE = "jetson-orin-nano-devkit-nvme"
+ 
+# Build directories
+TMPDIR = "${TOPDIR}/tmp"
+DL_DIR = "${TMPDIR}/downloads"
+SSTATE_DIR = "${TMPDIR}/sstate-cache"
+CACHE = "${TMPDIR}/cache"
+
+# Build performance settings
+PARALLEL_MAKE = "-j ${@oe.utils.cpu_count()}"
+BB_NUMBER_THREADS = "${@(oe.utils.cpu_count() * 2)}"
+RM_OLD_IMAGE = "1"
+
+# Password 'xen' for root user
+INHERIT += "extrausers"
+EXTRA_USERS_PARAMS = "usermod -p \$6\$rounds=5000\$l7r.o20dBw3w1H/\$kn9KDXBilE96.3F8XKM3GJ40nOx2technIzlabOY1onTE5VIJag/byd96UmbhEki50XpoW01cg73Ap96jNXMf/ root;"
+
+# Patch handling
+ERROR_QA:remove = "patch-fuzz"
+WARN_QA:append = " patch-fuzz"
+
+# Tegra-specific configurations
+IMAGE_CLASSES += "image_types_tegra"
+IMAGE_FSTYPES += "ext4 tegraflash"
+TEGRAFLASH_FS_TYPE = "ext4"
+
+# Package management
+PACKAGE_CLASSES ?= "package_ipk"
+EXTRA_IMAGE_FEATURES += "debug-tweaks tools-debug"
+USER_CLASSES ?= "buildstats"
+
+# Distribution configuration
+DISTRO = "xen-jetson"
+DISTRO_FEATURES:append = " virtualization xen efi systemd usrmerge"
+DISTRO_FEATURES:remove = "wayland vulkan"  # Remove if needed later
+
+# Keep X11 for display functionality in Dom0
+DISTRO_FEATURES:append = " x11 opengl"
+
+# System initialization
+VIRTUAL-RUNTIME_init_manager = "systemd"
+VIRTUAL-RUNTIME_initscripts = ""
+INIT_MANAGER = "systemd"
+
+# Kernel configuration
+PREFERRED_PROVIDER_virtual/kernel = "linux-jammy-nvidia-tegra"
+KERNEL_FEATURES:append = " features/xen/xen.scc"
+
+# Xen version
+PREFERRED_VERSION_xen = "4.18%"
+PREFERRED_VERSION_xen-tools = "4.18%"
+MACHINE_FEATURES:append = " xen"
+
+# Tegra-specific features
+MACHINE_FEATURES:append = " cuda tegra-firmware"
+
+# Xen configuration
+MACHINE_ESSENTIAL_EXTRA_RDEPENDS += " \
+    xen-base \
+    xen-tools \
+    xen-efi \
+"
+
+# Ensure Xen components are installed
+IMAGE_INSTALL:append = " \
+    xen \
+    xen-tools \
+    xen-xenstore \
+    xen-xl \
+    xen-scripts-block \
+    xen-scripts-network \
+    efibootmgr \
+"
+
+# Build optimizations
+PATCHRESOLVE = "noop"
+BB_DISKMON_DIRS = " \
+    STOPTASKS,${TMPDIR},1G,100K \
+    STOPTASKS,${DL_DIR},1G,100K \
+    STOPTASKS,${SSTATE_DIR},1G,100K \
+    HALT,${TMPDIR},100M,1K \
+    HALT,${DL_DIR},100M,1K \
+    HALT,${SSTATE_DIR},100M,1K \
+"
+
+# Configure for NVME storage
+TEGRA_SPIFLASH_BOOT ?= "1"
+
+# Additional configuration for Xen on ARM64
+XENFEAT_dom0 = "y"
+XEN_TARGET_ARCH = "aarch64"
+XEN_EXTRA_CFLAGS = "--enable-arm-ssbd"
+
+# Use tegra-minimal-initramfs for initial boot
+BOOT_PARTITION_MOUNTPOINT = "/boot"
+
+# EFI boot configuration for Xen
+UBOOT_EXTLINUX_CONSOLE = "console=ttyTCU0,115200 console=hvc0"
+UBOOT_EXTLINUX_XEN_ARGS = "dom0_mem=1024M dom0_max_vcpus=4"
+UBOOT_EXTLINUX_ROOT = "root=/dev/nvme0n1p1 rw rootwait"
+
+# License acceptance for NVIDIA proprietary components
+LICENSE_FLAGS_ACCEPTED += "commercial_nvidia-l4t"
