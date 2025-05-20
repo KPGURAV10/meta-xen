@@ -1,0 +1,19 @@
+# L4TLauncher configuration file with Xen support
+MENU TITLE L4T boot options
+TIMEOUT 30
+DEFAULT xen
+
+LABEL xen
+    MENU LABEL Xen Hypervisor
+    LINUX /boot/xen
+    APPEND dom0_mem=1024M console=ttyTCU0,115200 console=hvc0 dom0_max_vcpus=4
+    FDT /boot/tegra234-p3768-0000+p3767-0003.dtb
+    XENPARAM /boot/Image
+    XINIT root=/dev/nvme0n1p1 rw rootwait console=hvc0 earlyprintk=xen loglevel=15
+
+LABEL primary
+    MENU LABEL primary kernel
+    LINUX /boot/Image
+    FDT /boot/tegra234-p3768-0000+p3767-0003.dtb
+    INITRD /boot/initrd
+    APPEND ${cbootargs} mminit_loglevel=4 console=tty0 console=ttyTCU0,115200 firmware_class.path=/etc/firmware fbcon=map:0 nospectre_bhb root=/dev/nvme0n1p1 rw rootwait

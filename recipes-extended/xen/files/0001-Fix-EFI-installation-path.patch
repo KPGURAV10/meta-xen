@@ -1,0 +1,24 @@
+From f47a27bc903ee26e99d6a9ef1e9e5983f5db42a1 Mon Sep 17 00:00:00 2001
+From: Krishna Gurav <krishna.gurav@rampgroup.com>
+Date: Mon, 13 May 2024 10:00:00 +0000
+Subject: [PATCH] Fix EFI installation path
+
+---
+ xen/Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/xen/Makefile b/xen/Makefile
+index abcdefg..1234567 100644
+--- a/xen/Makefile
++++ b/xen/Makefile
+@@ -506,7 +506,7 @@ _install:
+ 		ln -sf xen-$(XEN_FULLVERSION).efi $(INSTALL_DIR)/usr/$(libdir)/efi/xen-$(XEN_MAJOR).efi; \
+ 		ln -sf xen-$(XEN_FULLVERSION).efi $(INSTALL_DIR)/usr/$(libdir)/efi/xen.efi; \
+ 		if [ -n '$(EFI_DIR)' -a -n '$(EFI_VENDOR)' ]; then \
+-			 $(INSTALL_DATA) xen.efi $(INSTALL_DIR)/$(EFI_DIR)/efi/$(EFI_VENDOR)/xen-$(XEN_FULLVERSION).efi; \
++			 mkdir -p $(INSTALL_DIR)/$(EFI_DIR)/EFI/$(EFI_VENDOR) && $(INSTALL_DATA) xen.efi $(INSTALL_DIR)/$(EFI_DIR)/EFI/$(EFI_VENDOR)/xen-$(XEN_FULLVERSION).efi; \
+ 		elif [ "$(INSTALL_DIR)" = "$(DISTDIR)/install" ]; then \
+ 			echo 'EFI installation only partially done (EFI_VENDOR not set)' >&2; \
+ 		fi; \
+-- 
+2.30.2
